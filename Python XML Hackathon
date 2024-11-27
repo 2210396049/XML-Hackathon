@@ -1,0 +1,58 @@
+# Python XML Hackathon
+# Kullanılan Modül ve Kütüphaneler
+import ipywidgets as widgets
+from IPython.display import display
+import xml.etree.ElementTree as ET
+# Form alanlarının oluşturulması
+feTitle = widgets.Text(description="Başlık: ")
+feSubject = widgets.Text(description="Konular: ")
+feDescription = widgets.Text(description="Özet: ")
+feCreator = widgets.Text(description="Yazar: ")
+feLicense = widgets.Text(description="Lisans: ")
+feLanguage = widgets.Text(description="Dil: ")
+feIdentifier = widgets.Text(description="URL: ")
+
+# Formun oluşturulması
+form = widgets.VBox([feTitle, feSubject, feDescription, feCreator, feLicense, feLanguage, feIdentifier])
+def tum_alanlarda_arama_yap(aranan_deger):
+    tree = ET.parse('oermetadata.xml')
+    root = tree.getroot()
+    eslesen_kaynaklar = []
+
+    for kaynak in root.findall('OER'):
+        kaynak_metni = " ".join([element.text or "" for element in kaynak.iter()])
+        if aranan_deger.lower() in kaynak_metni.lower():
+            eslesen_kaynaklar.append(kaynak)
+
+    return eslesen_kaynaklar
+
+# Arama terimi için input widget'ı oluştur
+arama_terimi_widget = widgets.Text(
+    placeholder='Arama terimini girin',
+    description='Arama:',
+    disabled=False
+)
+arama_butonu=widgets.Button(description="Ara")
+output_widget = widgets.Output()
+
+def aramaya_yap(b): # Butona basıldığında çağrılacak fonksiyon
+  with output_widget:
+    output_widget.clear_output()
+    aranan_deger = arama_terimi_widget.value
+    sonuclar = tum_alanlarda_arama_yap(aranan_deger)
+    if sonuclar:
+      for kaynak in sonuclar:
+        print(f"Başlık: {kaynak.find('title').text}")
+        print(f"Konular: {kaynak.find('subject').text}")
+        print(f"Özet: {kaynak.find('description').text}")
+        print(f"URL: {kaynak.find('identifier').text}")
+        print("-"* 20)
+    else:
+        print("Eşleşen kayıt bulunamadı.")
+
+# Butona tıklama olayını fonksiyona bağla
+arama_butonu.on_click(aramaya_yap)
+
+# Widget'ları görüntüle
+display(widgets.HBox([arama_terimi_widget, arama_butonu]))
+display(output_widget)
